@@ -132,7 +132,7 @@ function illusionLib.updateIllusions(botBrain)
 	if tPossibleIllusions ~= nil then
 		for nUID, unit in pairs(tPossibleIllusions) do
 			local sTypeName = unit:GetTypeName()
-			if sTypeName ~= "Pet_GroundFamiliar" and sTypeName ~= "Pet_FlyngCourier" then
+			if sTypeName == "Pet_NecroRanged" and sTypeName == "Pet_NecroMelee" then
 				tinsert(illusionLib.tIllusions, unit)
 			end
 		end
@@ -593,3 +593,5 @@ function tBottle.getRune()
 		return sKey
 	end
 end
+
+BotEcho('finished loading succubus_main')

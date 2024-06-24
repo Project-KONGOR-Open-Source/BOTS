@@ -1242,7 +1242,7 @@ function core.InventoryContains(inventory, val, bIgnoreRecipes, bIncludeStash)
 	--searches for a particular item in the inventory, returning a table of the Items
 	local tableOfThings = {}
     
-	local nLast = (bIncludeStash and 12) or 6
+	local nLast = (bIncludeStash and 14) or 8
 	
 	for slot = 1, nLast, 1 do
 		local curItem = inventory[slot]
@@ -1289,7 +1289,7 @@ function core.GetItem(val, bIncludeStash)
 			if bIncludeStash == nil then
 				bIncludeStash = false
 			end
-			local nLast = (bIncludeStash and 12) or 6
+			local nLast = (bIncludeStash and 14) or 8
 			for slot = 1, nLast, 1 do
 				local curItem = inventory[slot]
 				if curItem then

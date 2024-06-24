@@ -1,4 +1,6 @@
 -- Doctor Repulsor Bot v1.0a
+-- Coded by EyeOneTwoDye
+--   additions by malloc
 
 local _G = getfenv(0)
 local object = _G.object
@@ -87,21 +89,22 @@ object.tSkills = {
 }
 
 -- bonus agression points if a skill/item is available for use
-object.nContrpUp = 20
+object.nContraptionUp = 20
 object.nOpposingUp = 10
+object.nFrenzyUp = 7
 object.nSpeedUp = 40
 object.nHFlowerUp = 40
 object.nMorphUp = 45
 
 -- bonus agression points that are applied to the bot upon successfully using a skill/item
-object.nContrpUse = 30
+object.nContraptionUse = 30
 object.nOpposingUse = 15
 object.nSpeedUse = 35
 object.nHFlowerUse = 40
 object.nMorphUse = 40
 
 --thresholds of aggression the bot must reach to use these abilities
-object.nContrpThreshold = 25
+object.nContraptionThreshold = 25
 object.nOpposingThreshold = 20
 object.nSpeedThreshold = 40
 object.nHFlowerThreshold = 40
@@ -115,8 +118,6 @@ object.bToggleUltimateFrenzy = false
 ------------------------------
 --     skills               --
 ------------------------------
--- @param: none
--- @return: none
 function object:SkillBuild()
 	local unitSelf = self.core.unitSelf
 	if skills.abilQ == nil then
@@ -136,27 +137,32 @@ function object:SkillBuild()
 	end
 end
 
--- @param: eventdata
--- @return: none
+object.bDefensiveBlink = false
+
 function object:oncombateventOverride(EventData)
+	self:oncombateventOld(EventData)
+
 	local nBonus = 0
 
 	if EventData.Type == "Ability" then
 		if EventData.InflictorName == "Ability_DoctorRepulsor4" then
-			local lvl = core.unitSelf:GetLevel()
-			if lvl >= 16 then
-				nBonus = nBonus + object.nSpeedUse + 10 * lvl / 10
-			elseif lvl >= 11 then
-				nBonus = nBonus + object.nSpeedUse + 5 * lvl / 10
-			else
-				nBonus = nBonus + object.nSpeedUse + (lvl / 3) * 2
+			if not object.bDefensiveBlink then		
+				local lvl = core.unitSelf:GetLevel()
+				if lvl >= 16 then
+					nBonus = nBonus + object.nSpeedUse + 10 * lvl / 10
+				elseif lvl >= 11 then
+					nBonus = nBonus + object.nSpeedUse + 5 * lvl / 10
+				else
+					nBonus = nBonus + object.nSpeedUse + (lvl / 3) * 2
+				end
 			end
+			object.bDefensiveBlink = false
 		elseif EventData.InflictorName == "Ability_DoctorRepulsor1" then
-			nBonus = nBonus + object.nContrpUse
+			nBonus = nBonus + object.nContraptionUse
 		elseif EventData.InflictorName == "Ability_DoctorRepulsor2" then
 			nBonus = nBonus + object.nOpposingUse
 		else
-			nBonus = nBonus + object.nContrpUse
+			nBonus = nBonus + object.nContraptionUse
 		end
 	elseif EventData.Type == "Item" and EventData.SourceUnit == core.unitSelf:GetUniqueID() then
 		local itemMorph, itemSilence = core.GetItem("Item_Morph"), core.GetItem("Item_Silence")
@@ -175,17 +181,19 @@ end
 object.oncombateventOld = object.oncombatevent
 object.oncombatevent     = object.oncombateventOverride
 
--- @param: iunitentity hero
--- @return: number
 local function CustomHarassUtilityFnOverride(hero)
 	local nValue = 0
 
 	if skills.abilQ:CanActivate() then
-		nValue = nValue + object.nContrpUp
+		nValue = nValue + object.nContraptionUp
 	end
 
 	if skills.abilW:CanActivate() then
 		nValue = nValue + object.nOpposingUp
+	end
+	
+	if core.unitSelf:HasState("State_DoctorRepulsor_Ability3") then
+		nValue = nValue + object.nFrenzyUp
 	end
 
 	if skills.abilR:CanActivate() then
@@ -206,24 +214,19 @@ local function CustomHarassUtilityFnOverride(hero)
 end
 behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride  
 
--- @param botBrain: CBotBrain
--- @return: none
 local function CustomRetreatExecuteFnOverride(botBrain)
 	-- If we're low HP, run for our life!
 	local unitSelf = core.unitSelf
-	if unitSelf and unitSelf:GetHealth() > 0 and unitSelf:GetHealth() < 400
+	local bActionTaken = false	
+	
+	if unitSelf and unitSelf:GetHealth() > 0 and unitSelf:GetHealth() < 400 
 		and skills.abilR:CanActivate() and unitSelf:GetMana() > 230
 	then
---[[
-		-- stolen from RallyTest and adjusted a bit to fit
-		local vecOrigin = unitSelf:GetPosition()
-		local vecDirection = Vector3.Create(1, 0)
-		vecDirection = core.RotateVec2D(vecDirection, unitSelf:GetTeam() == 2 and 90 or -90)
-		core.OrderAbilityPosition(botBrain, skills.abilR, vecOrigin + vecDirection * 500)
-]]
-		core.OrderAbilityPosition(botBrain, skills.abilR,
-			behaviorLib.GetSafeBlinkPosition(core.allyWell:GetPosition(), 500)
-		)
+		bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilR, behaviorLib.GetSafeBlinkPosition(core.allyWell:GetPosition(), 500)		)
+		if bActionTaken then
+			object.bDefensiveBlink = true
+		end
+			
 		return true
 	end
 
@@ -231,9 +234,6 @@ local function CustomRetreatExecuteFnOverride(botBrain)
 end
 behaviorLib.CustomRetreatExecute = CustomRetreatExecuteFnOverride
 
--- @param botBrain: CBotBrain
--- @return: none
---
 local function HarassHeroExecuteOverride(botBrain)
 	local unitTarget = behaviorLib.heroTarget
 	if unitTarget == nil then
@@ -253,73 +253,70 @@ local function HarassHeroExecuteOverride(botBrain)
 	local bCanSee = core.CanSeeUnit(botBrain, unitTarget)
 	local bActionTaken = false
 
-	if bCanSee then
-		local bTargetVuln = unitTarget:IsStunned() or unitTarget:IsImmobilized() or unitTarget:IsPerplexed()
+	local bTargetVulnerable = unitTarget:IsStunned() or unitTarget:IsImmobilized() or unitTarget:IsPerplexed()
+	if bCanSee and not bTargetVulnerable then
+		local bNeedRange = false
+		local nRangeNeeded = 0
 
-		if not bTargetVuln then
-			local bNeedRange = false
-			local nRangeNeeded = 0
-
-			local itemMorph = core.GetItem("Item_Morph")
-			if itemMorph ~= nil and itemMorph:CanActivate() then
-				local range = itemMorph:GetRange()
-				if nLastHarassUtility > botBrain.nMorphThreshold and nTargetDistanceSq < (range * range) then
-					bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemMorph, unitTarget)
-				end
-			end
-
-			if not bActionTaken then
-				-- try hell flower or opposing charges
-				local itemSilence = core.GetItem("Item_Silence")
-				if itemSilence ~= nil and itemSilence:CanActivate()
-					and nLastHarassUtility > botBrain.nHFlowerThreshold
-				then
-					local range = itemSilence:GetRange()
-					if nTargetDistanceSq < (range * range) then
-						bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemSilence, unitTarget)
-					else
-						bNeedRange = true
-						nRangeNeeded = (range * range) - nTargetDistanceSq
-					end
-				elseif skills.abilW:CanActivate() and nLastHarassUtility > botBrain.nOpposingThreshold then
-					local range = skills.abilW:GetRange()
-					if nTargetDistanceSq < (range * range) then
-						bActionTaken = core.OrderAbilityEntity(botBrain, skills.abilW, unitTarget)
-					else
-						bNeedRange = true
-						nRangeNeeded = (range * range) - nTargetDistanceSq
-					end
-				end
-			end
-
-			if skills.abilR:CanActivate() and unitSelf:GetMana() >= 100 then
-				local vecTmp = vecTargetPosition
-				local bUse = true
-				if not bNeedRange then
-					if not object.bToggleUltimateFrenzy then
-						-- This will move him a bit and then we can proc his E correctly hopefully.
-						vecTmp[1] = vecTmp[1] * 1.02
-						vecTmp[2] = vecTmp[2] * 1.02
-						vecTmp[3] = vecTmp[3] * 0.50
-						object.bToggleUltimateFrenzy = true
-					else
-						bUse = false
-						object.bToggleUltimateFrenzy = false
-					end
-				else
-					vecTmp = vecTmp / nRangeNeeded
-				end
-
-				if bUse then
-					core.OrderAbilityPosition(botBrain, skills.abilR, vecTmp)
-				end
-			elseif bNeedRange then
-				bActionTaken = core.OrderMoveToUnitClamp(botBrain, unitSelf, unitTarget)
+		local itemMorph = core.GetItem("Item_Morph")
+		if itemMorph ~= nil and itemMorph:CanActivate() then
+			local range = itemMorph:GetRange()
+			if nLastHarassUtility > botBrain.nMorphThreshold and nTargetDistanceSq < (range * range) then
+				bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemMorph, unitTarget)
 			end
 		end
 
+		if not bActionTaken then
+			-- try hell flower or opposing charges
+			local itemSilence = core.GetItem("Item_Silence")
+			if itemSilence ~= nil and itemSilence:CanActivate()
+				and nLastHarassUtility > botBrain.nHFlowerThreshold
+			then
+				local range = itemSilence:GetRange()
+				if nTargetDistanceSq < (range * range) then
+					bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemSilence, unitTarget)
+				else
+					bNeedRange = true
+					nRangeNeeded = (range * range) - nTargetDistanceSq
+				end
+			elseif skills.abilW:CanActivate() and nLastHarassUtility > botBrain.nOpposingThreshold then
+				local range = skills.abilW:GetRange()
+				if nTargetDistanceSq < (range * range) then
+					bActionTaken = core.OrderAbilityEntity(botBrain, skills.abilW, unitTarget)
+				else
+					bNeedRange = true
+					nRangeNeeded = (range * range) - nTargetDistanceSq
+				end
+			end
+		end
+
+		if skills.abilR:CanActivate() and unitSelf:GetMana() >= 100 then
+			local vecTmp = vecTargetPosition
+			local bUse = true
+			if not bNeedRange then
+				if not object.bToggleUltimateFrenzy then
+					-- This will move him a bit and then we can proc his E correctly hopefully.
+					vecTmp[1] = vecTmp[1] * 1.02
+					vecTmp[2] = vecTmp[2] * 1.02
+					vecTmp[3] = vecTmp[3] * 0.50
+					object.bToggleUltimateFrenzy = true
+				else
+					bUse = false
+					object.bToggleUltimateFrenzy = false
+				end
+			else
+				vecTmp = vecTmp / nRangeNeeded
+			end
+
+			if bUse then
+				core.OrderAbilityPosition(botBrain, skills.abilR, vecTmp)
+			end
+		elseif bNeedRange then
+			bActionTaken = core.OrderMoveToUnitClamp(botBrain, unitSelf, unitTarget)
+		end
+
 		if not bActionTaken and skills.abilQ:CanActivate()
-			and nLastHarassUtility > botBrain.nContrpThreshold
+			and nLastHarassUtility > botBrain.nContraptionThreshold
 		then
 			local range = skills.abilQ:GetRange()
 			local off = nTargetDistanceSq - (range * range)

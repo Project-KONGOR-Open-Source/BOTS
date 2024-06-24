@@ -57,6 +57,8 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, min, random
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
+BotEcho(object:GetName()..' loading ravenor_main...')
+
 -- hero_ < hero >  to reference the internal hon name of a hero, Hero_Ravenor == Ravenor
 object.heroName = 'Hero_Ravenor'
 
@@ -84,20 +86,19 @@ object.nLightningUp = 18
 object.nLightningPortUp = 30
 object.nBladesUp = 25 
 object.nBladesActive = 40 
-object.nFeedbackUp = 12
 object.nPowerMul = 0.40
 
 -- bonus agression points that are applied to the bot upon successfully using a skill/item
 object.nLightningUse = 15
-object.nBladesUse = 20 
-object.nFeedbackUse = 5
+object.nBladesUse = 20
 
 -- thresholds of aggression the bot must reach to use these abilities
 object.nLightningThreshold = 33
 object.nLightningPortThreshold = 41
 object.nBladesThreshold = 38 
+
 --raises utility, if retreat or harass above 20
-object.nFeedbackThreshold = 20
+-- object.nFeedbackThreshold = 20
 
 --item thresholds
 object.nPortalKeyThreshold = 50
@@ -116,7 +117,7 @@ function object:SkillBuild()
 		skills.abilFeedback		= unitSelf:GetAbility(2)
 		skills.abilPower		= unitSelf:GetAbility(3)
 		
-		if skills.abilLightning and skills.abilBlades and skills.abilFeedback and skills.abilPower then
+		if skills.abilLightning and skills.abilBlades and skills.abilPower then
 			bSkillsValid = true
 		else
 			return
@@ -149,8 +150,8 @@ function object:oncombateventOverride(EventData)
 			nAddBonus = nAddBonus + object.nLightningUse
 		elseif EventData.InflictorName == "Ability_Ravenor2" then
 			nAddBonus = nAddBonus + object.nBladesUse
-		elseif EventData.InflictorName == "Ability_Ravenor3" then
-			nAddBonus = nAddBonus + object.nFeedbackUse
+		-- elseif EventData.InflictorName == "Ability_Ravenor3" then
+		-- 	nAddBonus = nAddBonus + object.nFeedbackUse
 		end
 	elseif EventData.Type == "Attack" and  EventData.InflictorName == "Projectile_Ravenor_Ability1" then
 		-- Save time of impact and impact target, so we know which hero we can teleport to
@@ -182,9 +183,6 @@ local function CustomHarassUtilityOverride(hero)
 		nUtil = nUtil + object.nBladesUp
 	elseif unitSelf:HasState("State_Ravenor_Ability2") then
 		nUtil = nUtil + object.nBladesActive
-	end
-	if skills.abilFeedback:CanActivate() then
-		nUtil = nUtil + object.nFeedbackUp
 	end
 	if skills.abilPower:GetLevel() > 0 then
 		nUtil = nUtil + (skills.abilPower:GetCharges() * object.nPowerMul)
@@ -261,32 +259,32 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 ----------------------------------------------------
 -- ELECTRIC FEEDBACK (E)
 ----------------------------------------------------
-function behaviorLib.ElectricFeecbackUtilityFn(botBrain)
-	local nLastSecondHeroDamage = eventsLib.recentHeroDamageSec
-	local nUtil = max(behaviorLib.lastRetreatUtil, behaviorLib.lastHarassUtil)
-	if nUtil > botBrain.nFeedbackThreshold and skills.abilFeedback:CanActivate() and nLastSecondHeroDamage > 0 then
-		-- Base returned value on lastRetreatUtil and lastHarassUtil since we want to be higher
-		nUtil = nUtil + 10
-	end
+-- function behaviorLib.ElectricFeecbackUtilityFn(botBrain)
+-- 	local nLastSecondHeroDamage = eventsLib.recentHeroDamageSec
+-- 	local nUtil = max(behaviorLib.lastRetreatUtil, behaviorLib.lastHarassUtil)
+-- 	if nUtil > botBrain.nFeedbackThreshold and skills.abilFeedback:CanActivate() and nLastSecondHeroDamage > 0 then
+-- 		-- Base returned value on lastRetreatUtil and lastHarassUtil since we want to be higher
+-- 		nUtil = nUtil + 10
+-- 	end
 	
-	return nUtil
-end
+-- 	return nUtil
+-- end
 
-function behaviorLib.ElectricFeecbackExecuteFn(botBrain)
-	local bActionTaken = false
+-- function behaviorLib.ElectricFeecbackExecuteFn(botBrain)
+-- 	local bActionTaken = false
 
-	local abilFeedback = skills.abilFeedback
-	if abilFeedback:CanActivate() then
-		bActionTaken = core.OrderAbility(botBrain, abilFeedback)
-	end
+-- 	local abilFeedback = skills.abilFeedback
+-- 	if abilFeedback:CanActivate() then
+-- 		bActionTaken = core.OrderAbility(botBrain, abilFeedback)
+-- 	end
 
-	return bActionTaken
-end
-behaviorLib.FeedbackBehavior = {}
-behaviorLib.FeedbackBehavior["Utility"] = behaviorLib.ElectricFeecbackUtilityFn
-behaviorLib.FeedbackBehavior["Execute"] = behaviorLib.ElectricFeecbackExecuteFn
-behaviorLib.FeedbackBehavior["Name"] = "Feedback"
-tinsert(behaviorLib.tBehaviors, behaviorLib.FeedbackBehavior)
+-- 	return bActionTaken
+-- end
+-- behaviorLib.FeedbackBehavior = {}
+-- behaviorLib.FeedbackBehavior["Utility"] = behaviorLib.ElectricFeecbackUtilityFn
+-- behaviorLib.FeedbackBehavior["Execute"] = behaviorLib.ElectricFeecbackExecuteFn
+-- behaviorLib.FeedbackBehavior["Name"] = "Feedback"
+-- tinsert(behaviorLib.tBehaviors, behaviorLib.FeedbackBehavior)
 
 ----------------------------------------------------
 --	BALL LIGHTENING TELEPORT (W)
@@ -387,5 +385,5 @@ object.onthink 	= object.onthinkOverride
 --]]
 
 
-
+BotEcho('finished loading ravenor_main')
 

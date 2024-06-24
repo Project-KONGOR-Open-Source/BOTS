@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="Shadowbladebot"
+	description="bot_description_shadowblade"
+	rootlua="../heroes/shadowblade_main.lua"
+	heroname="Hero_ShadowBlade"
+	defaultplayername="ShadowbladeBot"
+	precachepath="/heroes/shadowblade/"
+/>

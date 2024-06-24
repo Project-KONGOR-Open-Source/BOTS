@@ -2131,20 +2131,19 @@ function behaviorLib.PushExecute(botBrain)
 	local unitSelf = core.unitSelf
 	local bActionTaken = false
 
-	--Turn on Ring of the Teacher if we have it
-	if bActionTaken == false then
-		local itemRoT = core.itemRoT
+	--Turn on Ring of the Teacher if we have it; behaviour disabled due to the constant toggle bug
+	-- if bActionTaken == false then
+		-- local itemRoT = core.itemRoT
 		
-		if itemRoT then
-			itemRoT:Update()
+		-- if itemRoT then
+			-- itemRoT:Update()
 			
-			if itemRoT.bHeroesOnly then
-				if bDebugEchos then BotEcho("Turning on RoTeacher") end
-				bActionTaken = core.OrderItemClamp(botBrain, unitSelf, core.itemRoT)
-				core.itemRoT.bHeroesOnly = not core.itemRoT.bHeroesOnly
-			end
-		end
-	end
+			-- if itemRoT.bHeroesOnly then			
+				-- if bDebugEchos then BotEcho("Turning on RoTeacher") end
+				-- bActionTaken = core.OrderItemClamp(botBrain, unitSelf, core.itemRoT)
+			-- end
+		-- end
+	-- end
 	
 	--Attack creeps if we're in range
 	if bActionTaken == false then
@@ -2399,19 +2398,18 @@ function behaviorLib.PositionSelfExecute(botBrain)
 		return
 	end
 	
-	--Turn off Ring of the Teacher if we have it
-	local itemRoT = core.itemRoT
-	if itemRoT then
-		itemRoT:Update()
+	--Turn off Ring of the Teacher if we have it ; behaviour disabled due to the constant toggle bug
+	-- local itemRoT = core.itemRoT
+	-- if itemRoT then
+		-- itemRoT:Update()
 		
-		if not itemRoT.bHeroesOnly then
-			local bSuccess = core.OrderItemClamp(botBrain, unitSelf, core.itemRoT)
-			core.itemRoT.bHeroesOnly = not core.itemRoT.bHeroesOnly
-			if bSuccess then
-				return
-			end
-		end
-	end
+		-- if not itemRoT.bHeroesOnly then
+			-- local bSuccess = core.OrderItemClamp(botBrain, unitSelf, core.itemRoT)
+			-- if bSuccess then
+				-- return
+			-- end
+		-- end
+	-- end
 	
 	local vecDesiredPos = vecMyPosition
 	local unitTarget = nil
@@ -2911,7 +2909,7 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.HealAtWellBehavior)
 --TODO: Use "CanAccessWellShop" instead of CanAccessStash
 
 behaviorLib.nextBuyTime = HoN.GetGameTime()
-behaviorLib.buyInterval = 1000
+behaviorLib.buyInterval = 50
 behaviorLib.finishedBuying = false
 behaviorLib.canAccessShopLast = false
 
@@ -3098,9 +3096,9 @@ function behaviorLib.ShuffleCombine(botBrain, nextItemDef, unit)
 			end
 
 			--swap all components into your stash to combine them, avoiding any components in your stash already
-			local destSlot = 7
+			local destSlot = 9
 			for _, slot in ipairs(slotsToMove) do
-				if slot < 7 then
+				if slot < 9 then
 					--Make sure we don't swap with another component
 					local num = core.tableContains(slotsToMove, destSlot)
 					while num > 0 do
@@ -3144,7 +3142,7 @@ function behaviorLib.SortInventoryAndStash(botBrain)
 	--  because this is hella bad and inefficent.
 
 	--boots
-	for slot = 1, 12, 1 do
+	for slot = 1, 14, 1 do
 		local curItem = inventory[slot]
 
 		if behaviorLib.printShopDebug then
@@ -3155,7 +3153,7 @@ function behaviorLib.SortInventoryAndStash(botBrain)
 			BotEcho("  Checking if "..tostring(slot)..", "..name.." is a boot")
 		end
 
-		if curItem and (slot > 6 or slotsAvailable[slot] ~= false) then
+		if curItem and (slot > 8 or slotsAvailable[slot] ~= false) then
 			for _, bootName in ipairs(behaviorLib.BootsList) do
 				if curItem:GetName() == bootName then
 
@@ -3190,7 +3188,7 @@ function behaviorLib.SortInventoryAndStash(botBrain)
 
 	--magic armor
 	bFound = false
-	for slot = 1, 12, 1 do
+	for slot = 1, 14, 1 do
 		local curItem = inventory[slot]
 		if slotsLeft < 1 then
 			break
@@ -3233,7 +3231,7 @@ function behaviorLib.SortInventoryAndStash(botBrain)
 	--homecoming stone
 	bFound = false
 	local tpName = core.idefHomecomingStone:GetName()
-	for slot = 1, 12, 1 do
+	for slot = 1, 14, 1 do
 		local curItem = inventory[slot]
 		if slotsLeft < 1 then
 			break
@@ -3247,30 +3245,31 @@ function behaviorLib.SortInventoryAndStash(botBrain)
 			BotEcho("  Checking if "..tostring(slot)..", "..name.." is a homecoming stone")
 		end
 
-		if curItem and (slot > 6 or slotsAvailable[slot] ~= false) then
-			if curItem:GetName() == tpName then
-				for i = 1, #slotsAvailable, 1 do
-					if slotsAvailable[i] then
-						unitSelf:SwapItems(slot, i)
-						slotsAvailable[i] = false
-						slotsLeft = slotsLeft - 1
-						inventory[slot], inventory[i] = inventory[i], inventory[slot]
-						break
+		if curItem and curItem:GetName() == tpName then
+			if slot ~= 7 and slot ~= 8 then
+				local emptySlot = 0
+				if inventory[7] == nil then
+					emptySlot = 7
+				else
+					if inventory[8] == nil then
+						emptySlot = 8
 					end
 				end
+				if emptySlot ~= 0 then
+						unitSelf:SwapItems(slot, emptySlot)
+				end
+
 				bFound = true
 			end
-		end
-
-		if bFound then
 			break
 		end
+
 	end
 
 	--portal key
 	bFound = false
 	local sPortalKeyName = behaviorLib.sPortalKeyName
-	for slot = 1, 12, 1 do
+	for slot = 1, 14, 1 do
 		local curItem = inventory[slot]
 		if slotsLeft < 1 then
 			break
@@ -3314,7 +3313,7 @@ function behaviorLib.SortInventoryAndStash(botBrain)
 		--selection sort
 		local highestValue = 0
 		local highestSlot = -1
-		for slot = 1, 12, 1 do
+		for slot = 1, 14, 1 do
 			local curItem = inventory[slot]
 			if curItem and (slot > 6 or slotsAvailable[slot] ~= false) then
 				local cost = 0
@@ -3367,7 +3366,7 @@ function behaviorLib.SortInventoryAndStash(botBrain)
 end
 
 function behaviorLib.SellLowestItems(botBrain, numToSell)
-	if numToSell > 12 then --sanity checking
+	if numToSell > 14 then --sanity checking
 		return
 	end
 
@@ -3378,7 +3377,7 @@ function behaviorLib.SellLowestItems(botBrain, numToSell)
 
 	while numToSell > 0 do
 		lowestValue = 99999
-		for slot = 1, 12, 1 do
+		for slot = 1, 14, 1 do
 			local curItem = inventory[slot]
 			if curItem and not curItem:IsRecipe() then
 				local cost = curItem:GetTotalCost()
@@ -3406,12 +3405,14 @@ end
 function behaviorLib.NumberSlotsOpen(inventory)
 	local numOpen = 0
 	--BotEcho("#inventory "..#inventory)
-	for slot = 1, 12, 1 do
-		curItem = inventory[slot]
-		--BotEcho("NumberSlotsOpen - Checking Slot "..slot)
-		if curItem == nil then
-			--BotEcho("  slot is open")
-			numOpen = numOpen + 1
+	for slot = 1, 14, 1 do
+		if slot == 7 or slot == 8 then
+			curItem = inventory[slot]
+			--BotEcho("NumberSlotsOpen - Checking Slot "..slot)
+			if curItem == nil then
+				--BotEcho("  slot is open")
+				numOpen = numOpen + 1
+			end
 		end
 	end
 	return numOpen
@@ -3540,10 +3541,11 @@ Current algorithm:
        3. Homecoming Stone
        4. Most Expensive Item(s) (price decending)
 --]]
+
 	if object.bUseShop == false then
 		return
 	end
-
+	
 	-- Space out your buys
 	if behaviorLib.nextBuyTime > HoN.GetGameTime() then
 		return

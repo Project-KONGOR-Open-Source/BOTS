@@ -951,7 +951,7 @@ function core.FindItems(botBrain)
 	
 	local inventory = unitSelf:GetInventory(false)
 	if inventory ~= nil then
-		for slot = 1, 6, 1 do
+		for slot = 1, 8, 1 do
 			local curItem = inventory[slot]
 			if curItem and not curItem:IsRecipe() then
 				if core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then
@@ -974,12 +974,12 @@ function core.FindItems(botBrain)
 				
 				if core.itemRoT == nil and curItem:GetName() == "Item_ManaRegen3" then
 					core.itemRoT = core.WrapInTable(curItem)
-					core.itemRoT.bHeroesOnly = false
+					core.itemRoT.bHeroesOnly = (curItem:GetActiveModifierKey() == "RingOfTheTeacher_Aura_Toggle_Heroes")
 					core.itemRoT.nNextUpdateTime = 0
 					core.itemRoT.Update = function() 
 						local nCurrentTime = HoN.GetGameTime()
 						if nCurrentTime > core.itemRoT.nNextUpdateTime then
-							core.itemRoT.bHeroesOnly = (core.itemRoT:GetActiveModifierKey() == "ringoftheteacher_heroes")
+							core.itemRoT.bHeroesOnly = (core.itemRoT:GetActiveModifierKey() == "RingOfTheTeacher_Aura_Toggle_Heroes")
 							core.itemRoT.nNextUpdateTime = nCurrentTime + 800
 						end
 					end

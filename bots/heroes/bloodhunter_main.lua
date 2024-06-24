@@ -176,7 +176,7 @@ local function AbilitiesUpUtilityFn()
 end
 
 function object:oncombateventOverride(EventData)
-self:oncombateventOld(EventData)
+	self:oncombateventOld(EventData)
 
 	local addBonus = 0
 	if EventData.Type == "Ability" then	
@@ -199,16 +199,42 @@ self:oncombateventOld(EventData)
 		end
 	end
 
-	if addBonus > 0 then
-	
-	--decay before we add
-	core.DecayBonus(self)
-	core.nHarassBonus = core.nHarassBonus + addBonus
-	
+	if addBonus > 0 then	
+		--decay before we add
+		core.DecayBonus(self)
+		core.nHarassBonus = core.nHarassBonus + addBonus	
 	end
 end
 object.oncombateventOld = object.oncombatevent
 object.oncombatevent = object.oncombateventOverride
+
+
+local function GetHemorrhageDamage()
+	if skills.abilHemorrhage ~= nil then
+		local nLevel = skills.abilHemorrhage:GetLevel()
+		if nLevel == 0 then
+			return 0
+		elseif nLevel == 1 then
+			return 200
+		elseif nLevel == 1 then
+			return 325
+		elseif nLevel == 1 then
+			return 450
+		end
+	end
+
+	return 0
+end
+
+local function GetCodexDamage()
+	local itemCodex = core.GetItem ("Item_Nuke")
+	if itemCodex ~= nil then
+		return ((itemCodex:GetLevel() * 100) + 300)
+	end
+	
+	return 0
+end
+
 
 ----------------------------------
 -- harass actions
@@ -234,23 +260,22 @@ local function HarassHeroExecuteOverride(botBrain)
 	
 	local abilSilence = skills.abilSilence
 	local abilHemorrhage = skills.abilHemorrhage
-	local SilenceLvl = abilSilence:GetLevel()	
+	local nSilenceLvl = abilSilence:GetLevel()	
 	
-	--Item Declares--
 	local itemCodex = core.GetItem ("Item_Nuke")
 	local itemNullBlade = core.GetItem ("Item_ManaBurn1")
 	
 	local nIsSighted = core.CanSeeUnit(botBrain, unitTarget)
 	
 	--Effective Hit Point Calculation--
-	local GetHealthE = unitTarget:GetHealth()
-	local MagicResist = unitTarget:GetMagicResistance()
+	local nHealth = unitTarget:GetHealth()
+	local nMagicResist = unitTarget:GetMagicResistance()
 	local nEffectiveHP = 0
 	if nIsSighted then
-		nEffectiveHP = ((MagicResist + 1) * GetHealthE)
+		nEffectiveHP = ((nMagicResist + 1) * nHealth)
 	end
 	
-	-- Silence B -Hostile-
+	-- Hostile Silence
 	if abilSilence:CanActivate() and nIsSighted then --Cast Silence if
 		local nRange = abilSilence:GetRange()
 		if nTargetDistanceSq < (nRange * nRange) then -- target is in range and
@@ -258,29 +283,29 @@ local function HarassHeroExecuteOverride(botBrain)
 				bActionTaken = core.OrderAbilityEntity(botBrain, abilSilence, unitTarget)
 			elseif nEffectiveHP < 300 then -- or there is a hero near death
 				bActionTaken = core.OrderAbilityEntity(botBrain, abilSilence, unitTarget)
-			elseif (unitSelf:GetManaPercent() > .80) and (SilenceLvl < 3) then --If BH has mana and the ability will not give a large attack bonus
+			elseif (unitSelf:GetManaPercent() > .80) and (nSilenceLvl < 3) then --If BH has mana and the ability will not give a large attack bonus
 				bActionTaken = core.OrderAbilityEntity(botBrain, abilSilence, unitTarget)
 			end
 		end
 	end
 	
-	--Hemorrhage
+	-- Hemorrhage
 	if not bActionTaken and abilHemorrhage:CanActivate() and nIsSighted then -- Cast Hermorrhage if
 		local nRange = abilHemorrhage:GetRange()
 		if nTargetDistanceSq < (nRange * nRange) then
 			if (nLastHarassUtility > botBrain.nHemorrhageThreshold) then -- target is in close range and ability threshold
 				bActionTaken = core.OrderAbilityEntity(botBrain, abilHemorrhage, unitTarget)
-			elseif (nEffectiveHP < 350) then -- or ability would kill a hero
+			elseif (nHealth < GetHemorrhageDamage()) then
 				bActionTaken = core.OrderAbilityEntity(botBrain, abilHemorrhage, unitTarget)
 			end
 		end
 	end
 
-	--codex
-	if not bActionTaken and itemCodex and core.nDifficulty ~= core.nEASY_DIFFICULTY then --Difficulty modifier taken from Parasite Bot made by Mellow_Ink and Kairus101
+	-- Codex
+	if not bActionTaken and itemCodex and core.nDifficulty ~= core.nEASY_DIFFICULTY then
 		if nIsSighted and itemCodex:CanActivate() then -- Cast Codex if
 			local nRange = itemCodex:GetRange()
-			local nCodexDamage = ((itemCodex:GetLevel() * 100) + 300)
+			local nCodexDamage = GetCodexDamage()
 			if nTargetDistanceSq < (nRange * nRange) then --Codex selected and Target is in range and 
 				if (core.NumberElements(tLocalEnemyHeroes) > 2) and (core.NumberElements(tLocalAllyHeroes) > 2) then -- Cast in a team fight (more than 2 enemy and 2 ally heroes)
 					bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemCodex, unitTarget)
@@ -291,11 +316,11 @@ local function HarassHeroExecuteOverride(botBrain)
 		end
 	end
 	
-	-- Silence A -Helpful-
-	if  not bActionTaken and itemNullBlade then --If BH has Nullfire blade
+	-- Helpful Silence
+	if not bActionTaken and itemNullBlade then --If BH has Nullfire blade
 		local nRange = itemNullBlade:GetRange()
 		local nInRange = nTargetDistanceSq < (nRange * nRange)
-		if abilSilence:CanActivate() and (SilenceLvl > 2) and itemNullBlade:CanActivate() then --  Silence can activate and has Nullfire to remove debuff and will provide a decent buff
+		if abilSilence:CanActivate() and (nSilenceLvl > 2) and itemNullBlade:CanActivate() then --  Silence can activate and has Nullfire to remove debuff and will provide a decent buff
 			if (unitSelf:GetHealthPercent() > .25) then -- Or BH is in fighting order with more damage then 
 				bActionTaken = core.OrderAbilityEntity(botBrain, abilSilence, unitSelf) -- Cast Silence on self 
 			end

@@ -13,7 +13,7 @@ behaviorLib.tDontUseDefaultItemBehavior = {}
 
 function behaviorLib.addCurrentItemBehaviors()  --run on initialization, to add current item behaviors.
 	local inventory = core.unitSelf:GetInventory(false)
-	for slot = 1, 6 do
+	for slot = 1, 8 do
 		local curItem = inventory[slot]
 		if curItem then
 			behaviorLib.addItemBehavior(curItem:GetName(), false)
@@ -406,7 +406,6 @@ function behaviorLib.UseRunesOfTheBlightUtility(botBrain)
 	-- Function which crosses 20 at x = 115 and is 30 at roughly x = 600, convex down
 
 	local unitSelf = core.unitSelf
-	local tInventory = unitSelf:GetInventory()
 	behaviorLib.itemBlights = core.GetItem("Item_RunesOfTheBlight")
 	
 	if behaviorLib.itemBlights and not unitSelf:HasState("State_RunesOfTheBlight") then
@@ -479,7 +478,6 @@ function behaviorLib.UsePotionOfBlightUtility(botBrain)
 	-- Function which crosses 20 at x = 115 and is 30 at roughly x = 600, convex down
 
 	local unitSelf = core.unitSelf
-	local tInventory = unitSelf:GetInventory()
 	behaviorLib.itemBlightPotion = core.GetItem("Item_PotionOfBlight")
 	
 	if behaviorLib.itemBlightPotion and not unitSelf:HasState("State_PotionOfBlight") then
@@ -795,7 +793,7 @@ function behaviorLib.ChargedHammerUtility(botBrain)
 		local nRange = behaviorLib.itemChargedHammer:GetRange()
 		for i, hero in pairs(tAllyHeroes) do
 			local nDistanceSq = Vector3.Distance2DSq(unitSelf:GetPosition(), hero:GetPosition())
-			if hero:IsValid() and hero:IsAlive() and not hero:HasState("State_Item5C") and behaviorLib.unitChargedHammerTarget:GetHealthPercent() > hero:GetHealthPercent() and nDistanceSq < nRange * nRange then
+			if hero:IsValid() and hero:IsAlive() and not hero:HasState("State_Lightning2") and behaviorLib.unitChargedHammerTarget:GetHealthPercent() > hero:GetHealthPercent() and nDistanceSq < nRange * nRange then
 				behaviorLib.unitChargedHammerTarget = hero
 			end
 		end

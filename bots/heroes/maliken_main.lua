@@ -151,6 +151,17 @@ local function getSwordPosition() --this may be slightly off if Maliken levels h
 	return vecSource + nNewTimeSinceThrow * nSwordProjectileSpeed / 1000 * Vector3.Normalize(vecDestination - vecSource), nTimeSinceThrow / nTotalThrowDuration
 end
 
+-- stance: swordflame or swordhealing from Ability_Maliken2
+function object:SetSwordStance(stance)
+	if skills.abilSwordOfTheDamned:CanActivate() then
+
+		if skills.abilSwordOfTheDamned:HasModifierKey(stance) then
+			return
+		end
+		core.OrderAbility(self, skills.abilSwordOfTheDamned)
+	end
+end
+
 object.nSwordType = 0 --0 none, 1 damage, 2 heal
 function object:onthinkOverride(tGameVariables)
 	self:onthinkOld(tGameVariables)
@@ -160,11 +171,11 @@ function object:onthinkOverride(tGameVariables)
 		
 	if unitSelf:IsAlive() then--not dead
 		local nHealthPercent = unitSelf:GetHealthPercent()
-		if nHealthPercent > 0.85 and object.nSwordType ~= 1 and skills.abilSwordFlame:CanActivate() and core.OrderAbility(self, skills.abilSwordFlame) then
-			object.nSwordType = 1 -- DAMAGE
+		if nHealthPercent > 0.85 then
+			self:SetSwordStance("swordflame") -- DAMAGE
 			
-		elseif nHealthPercent < 0.85 and object.nSwordType ~= 2 and skills.abilSwordHeal:CanActivate() and core.OrderAbility(self, skills.abilSwordHeal) then
-				object.nSwordType = 2 -- HEAL
+		elseif nHealthPercent < 0.85 then
+			self:SetSwordStance("swordhealing") -- HEAL
 		end
 	else
 		object.nSwordType = 0

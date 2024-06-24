@@ -29,29 +29,29 @@ local object = _G.object
 
 object.myName = object:GetName()
 
-object.bRunLogic         = true
+object.bRunLogic        = true
 object.bRunBehaviors    = true
 object.bUpdates         = true
 object.bUseShop         = true
 
 object.bRunCommands     = true 
-object.bMoveCommands     = true
-object.bAttackCommands     = true
+object.bMoveCommands    = true
+object.bAttackCommands  = true
 object.bAbilityCommands = true
-object.bOtherCommands     = true
+object.bOtherCommands   = true
 
-object.bReportBehavior = false
-object.bDebugUtility = false
+object.bReportBehavior  = false
+object.bDebugUtility    = false
 
 object.logger = {}
 object.logger.bWriteLog = false
 object.logger.bVerboseLog = false
 
-object.core         = {}
-object.eventsLib     = {}
-object.metadata     = {}
-object.behaviorLib     = {}
-object.skills         = {}
+object.core             = {}
+object.eventsLib        = {}
+object.metadata         = {}
+object.behaviorLib      = {}
+object.skills           = {}
 
 runfile "bots/core.lua"
 runfile "bots/botbraincore.lua"
@@ -90,10 +90,10 @@ object.heroName = 'Hero_Pyromancer'
 core.tLanePreferences = {Jungle = 0, Mid = 5, ShortSolo = 4, LongSolo = 3, ShortSupport = 3, LongSupport = 3, ShortCarry = 3, LongCarry = 2}
 
 --   item buy order. internal names  
-behaviorLib.StartingItems  = {"Item_RunesOfTheBlight", "Item_ManaBattery", "Item_MarkOfTheNovice", "2 Item_MinorTotem"}
+behaviorLib.StartingItems  = {"Item_RunesOfTheBlight",  "Item_MarkOfTheNovice", "2 Item_MinorTotem"}
 behaviorLib.LaneItems  = {"Item_Marchers", "Item_PowerSupply", "Item_ApprenticesRobe", "Item_Steamboots", "Item_Scarab"}
 behaviorLib.MidItems  = {"Item_Weapon1", "Item_PortalKey", "Item_Weapon1"}
-behaviorLib.LateItems  = {"Item_Silence", "Item_Beastheart", "Item_AxeOfTheMalphai", "Item_BehemothsHeart", "Item_Confluence", "Item_Morph"}
+behaviorLib.LateItems  = {"Item_Silence", "Item_Beastheart", "Item_AxeOfTheMalphai", "Item_BehemothsHeart", "Item_Morph"}
 
 
 -- skillbuild table, 0=q, 1=w, 2=e, 3=r, 4=attri
@@ -205,18 +205,24 @@ behaviorLib.CustomHarassUtility = CustomHarassUtilityOverride
 ------------------------------
 --     skills               --
 ------------------------------
--- @param: none
--- @return: none
+local bSkillsValid = false
 function object:SkillBuild()
     core.VerboseLog("skillbuild()")
-
-    local unitSelf = self.core.unitSelf
-    if  skills.Phoenix == nil then
-        skills.Phoenix = unitSelf:GetAbility(0)
+	
+    local unitSelf = self.core.unitSelf       
+    if not bSkillsValid then
+		skills.Phoenix = unitSelf:GetAbility(0)
         skills.Dragon = unitSelf:GetAbility(1)
         skills.Fervor = unitSelf:GetAbility(2)
         skills.Blazing = unitSelf:GetAbility(3)
-    end
+ 
+		if skills.Phoenix and skills.Dragon and skills.Fervor and skills.Blazing then
+			bSkillsValid = true    
+		else
+			return
+		end
+	end
+
     if unitSelf:GetAbilityPointsAvailable() <= 0 then
         return
     end
@@ -232,8 +238,6 @@ end
 --            oncombatevent override        --
 -- use to check for infilictors (fe. buffs) --
 ----------------------------------------------
--- @param: eventdata
--- @return: none
 function object:oncombateventOverride(EventData)
 	self:oncombateventOld(EventData)
 	
@@ -269,6 +273,7 @@ end
 object.oncombateventOld = object.oncombatevent
 object.oncombatevent     = object.oncombateventOverride
 
+-- Consider integrating this into general bot logic -malloc
 function ProxToEnemyTowerUtilityOverride(unit, unitClosestEnemyTower)
 	local bDebugEchos = false
 	
@@ -440,8 +445,6 @@ end
 --------------------------------------------------------------
 --                    Farming Behavior                      --
 --------------------------------------------------------------
--- @param botBrain: CBotBrain
--- @return: none
 --
 local function AttackCreepExecuteOverride(botBrain)
 	local unitTarget = core.unitEnemyCreepTarget
@@ -504,9 +507,6 @@ behaviorLib.AttackCreepsBehavior["Execute"] = AttackCreepExecuteOverride
 --                    Harass Behavior                       --
 -- All code how to use abilities against enemies goes here  --
 --------------------------------------------------------------
--- @param botBrain: CBotBrain
--- @return: none
---
 local function HarassHeroExecuteOverride(botBrain)
     
     local unitTarget = behaviorLib.heroTarget
@@ -779,7 +779,7 @@ local function CustomHealAtWellUtilityFnOverride(botBrain)
 	--Gold buildup increases wish to go home
 	nUtility = nUtility + nGold / (5 + nLevel * 20)
 
-	return nUtility + object.HealAtWellUtilityOld(botBrain)
+	return object.HealAtWellUtilityOld(botBrain) -- core.Clamp(nUtility + object.HealAtWellUtilityOld(botBrain), 0 , 80)
 end
 object.HealAtWellUtilityOld =  behaviorLib.HealAtWellUtility
 behaviorLib.HealAtWellBehavior["Utility"] = CustomHealAtWellUtilityFnOverride

@@ -1,9 +1,6 @@
-
-
-   
-
---ArmadonBot v0.5
-    --Coded by Sparks1992
+--ArmadonBot v1.0
+--Coded by Sparks1992
+--   additions by malloc
  
 local _G = getfenv(0)
 local object = _G.object
@@ -58,7 +55,6 @@ BotEcho('loading armadon_main...')
 -- Lanes
 --------------------------------
 core.tLanePreferences = {Jungle = 0, Mid = 1, ShortSolo = 3, LongSolo = 3, ShortSupport = 2, LongSupport = 2, ShortCarry = 1, LongCarry = 1}
-
 
 object.heroName = 'Hero_Armadon'
    
@@ -123,26 +119,30 @@ behaviorLib.LateItems =
 --  Abilities off cd increase harass util
 --  Ability use increases harass util for a time
 ----------------------------------
- 
+
+-- Should include extra aggression when ult stacks -malloc
+
 object.nSnotUp    = 5
-object.nSpineUp   = 10  
+object.nSpineUp   = 10
  
-object.nSnotUse   = 5
-object.nSpineUse  = 10
-	
+object.nSnotUse   = 15
+object.nSpineUse  = 14
+
 local function AbilitiesUpUtilityFn()
 	local nUtility = 0
        
 	if skills.abilSnot:CanActivate() then
-		nUtility = nUtility + object.nSnotUpBonus
+		nUtility = nUtility + object.nSnotUp
 	end
        
 	if skills.abilSpine:CanActivate() then
-		nUtility = nUtility + object.nSpineUpBonus
+		nUtility = nUtility + object.nSpineUp
 	end
 
 	return nUtility
 end
+ 
+object.bDefensiveSpines = false
  
 --ability use gives bonus to harass util for a while
 function object:oncombateventOverride(EventData)
@@ -154,8 +154,14 @@ function object:oncombateventOverride(EventData)
 		if EventData.InflictorName == "Ability_Armadon1" then
 			nAddBonus = nAddBonus + object.nSnotUse
 		end
+		
+		
 		if EventData.InflictorName == "Ability_Armadon2" then
-			nAddBonus = nAddBonus + object.nSpineUse
+			if not object.bDefensiveSpines then
+				nAddBonus = nAddBonus + object.nSpineUse
+			end
+			
+			object.bDefensiveSpines = false
 		end
  
 	end
@@ -219,28 +225,52 @@ local function HarassHeroExecuteOverride(botBrain)
 end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
- 
---[[ colors:
-	red
-	aqua == cyan
-	gray
-	navy
-	teal
-	blue
-	lime
-	black
-	brown
-	green
-	olive
-	white
-	silver
-	purple
-	maroon
-	yellow
-	orange
-	fuchsia == magenta
-	rainbows motherfucker
-	invisible
---]]
+
+-----------------------------
+--	 Retreat execute	 --
+-----------------------------
+
+--Modelled after Pure`Light's Magebane custom retreat code.
+--  this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
+
+function behaviorLib.CustomRetreatExecute(botBrain)
+	bActionTaken = false
+
+	local unitSelf = core.unitSelf
+	local unitTarget = behaviorLib.heroTarget
+	if unitTarget == nil or not unitTarget:IsValid() then
+		return false
+	end
+
+	local vecMyPosition = unitSelf:GetPosition()       
+	local vecTargetPosition = unitTarget:GetPosition()
+	
+	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
+	
+	--Counting the enemies
+	local tEnemies = core.localUnits["EnemyHeroes"]
+	local nCount = 0
+
+	local bCanSeeUnit = unitTarget and core.CanSeeUnit(botBrain, unitTarget)
+	for id, unitEnemy in pairs(tEnemies) do
+		if core.CanSeeUnit(botBrain, unitEnemy) then
+			nCount = nCount + 1
+		end
+	end
+
+	if unitSelf:GetHealthPercent() < .50 then
+		local abilSpine = skills.abilSpine
+		-- BACK OFF!
+		if bCanSeeUnit and abilSpine:CanActivate() and nTargetDistanceSq < (650 * 650) then
+			bActionTaken = core.OrderAbility(botBrain, abilSpine)
+				
+			if bActionTaken then
+				object.bDefensiveSpine = true	-- Don't get aggressive if we're blinking away
+			end
+		end
+	end
+
+	return bActionTaken
+end
  
 BotEcho('finished loading armadon_main')

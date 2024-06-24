@@ -1,4 +1,4 @@
---Magebane Bot v 0.69 (yeah baby)
+--Magebane Bot v 1.0
 
 --[[----------------------------------------------------------------------------
 --
@@ -135,36 +135,25 @@ end
 -----------------------------------------
 --	 Harass Utility Calculations	 --
 -----------------------------------------
-
-
-
 -- bonus aggression points if a skill/item is available for use
-
 object.nFlashUp					= 13
 object.nManaRiftUp				= 40
 object.nEPup					= 15
 
 -- bonus aggression points that are applied to the bot upon successfully using a skill/item
-
 object.nFlashUse				= 45
 object.nManaRiftUse				= 70
 object.nEPUse					= 25
 
 -- thresholds of aggression the bot must reach to use these abilities
-
 object.nFlashThreshold		  = 35
 object.nManaRiftThreshold	  = 50
-
-
--- Additional Modifiers (items, etc.)
 
 --weight overrides (Melee?)
 behaviorLib.nCreepPushbackMul		   = 0.3
 behaviorLib.nTargetPositioningMul	   = 0.8
 
-
-	--Ability is currently up
-
+--Ability is currently up
 local function AbilitiesUpUtilityFn()
 	local nUtility = 0
 
@@ -183,23 +172,29 @@ local function AbilitiesUpUtilityFn()
 	return nUtility
 end
 
+object.bDefensiveBlink = false
+
 --Ability has been used
 function object:oncombateventOverride(EventData)
 	self:oncombateventOld(EventData)
-
+	
 	local addBonus = 0
 	if EventData.Type == "Ability" then
-		if EventData.InflictorName == "Ability_Magebane2" then
-			addBonus = addBonus + object.nFlashUse
+		if EventData.InflictorName == "Ability_Javaras2" then
+			if not object.bDefensiveBlink then
+				addBonus = addBonus + object.nFlashUse
+			end
+			
+			object.bDefensiveBlink = false
 		end
 
-		if EventData.InflictorName == "Ability_Magebane4" then
+		if EventData.InflictorName == "Ability_Javaras4" then
 			addBonus = addBonus + object.nManaRiftUse
 		end
 
 			--Additional Modifiers; ex: Items
 	elseif EventData.Type == "Item" then
-		if core.itemElderParasite ~= nil and EventData.SourceUnit == core.unitSelf:GetUniqueID() and EventData.InflictorName == core.itemElderParasite:GetName() then
+		if core.itemElderParasite ~= nil and EventData.InflictorName == core.itemElderParasite:GetName() and EventData.SourceUnit == core.unitSelf:GetUniqueID() then
 			addBonus = addBonus + object.nEPUse
 		end
 	end
@@ -219,12 +214,12 @@ object.oncombatevent = object.oncombateventOverride
 
 local function HarassHeroExecuteOverride(botBrain)
 	local bDebugEchos = false
-	--HunterKiller Sequencing
+
 	local unitTarget = behaviorLib.heroTarget
 	if unitTarget == nil or not unitTarget:IsValid() then
-			return false --No enemy to kill == NoJoy
+		return false --No enemy to kill == NoJoy
 	end
-	--Equations/TimeSavers
+
 	local unitSelf = core.unitSelf
 	local tLocalEnemyHeroes = core.localUnits["EnemyHeroes"]
 	local vecMyPosition = unitSelf:GetPosition()
@@ -234,58 +229,55 @@ local function HarassHeroExecuteOverride(botBrain)
 	local nLastHarassUtility = behaviorLib.lastHarassUtil
 	local bTargetRooted = unitTarget:IsStunned() or unitTarget:IsImmobilized()
 	local bSelfRooted = unitSelf:IsStunned() or unitSelf:IsImmobilized()
-	--Le bActionTaken
+
 	local bActionTaken = false
 
-	--Ability Declares
 	local abilManaBurn = skills.abilManaBurn
 	local abilManaRift = skills.abilManaRift
 	local abilFlash	= skills.abilFlash
-	--Item Declares
-			--ElderParasite
+
 	local itemElderParasite = core.itemElderParasite
 
 	--Ability1	  Flash
 	if not bSelfRooted and nLastHarassUtility > botBrain.nFlashThreshold and abilFlash:CanActivate() then
 		if bDebugEchos then BotEcho("  No action yet, checking time leap") end
-			local vecTargetTraveling = nil
-			if unitTarget.bIsMemoryUnit and unitTarget.lastStoredPosition then
-				vecTargetTraveling = Vector3.Normalize(vecTargetPosition - unitTarget.lastStoredPosition)
-			else
-				local unitEnemyWell = core.enemyWell
-				if unitEnemyWell then
-					vecTargetTraveling = Vector3.Normalize(unitEnemyWell:GetPosition() - vecTargetPosition)
-				end
+		local vecTargetTraveling = nil
+		if unitTarget.bIsMemoryUnit and unitTarget.lastStoredPosition then
+			vecTargetTraveling = Vector3.Normalize(vecTargetPosition - unitTarget.lastStoredPosition)
+		else
+			local unitEnemyWell = core.enemyWell
+			if unitEnemyWell then
+				vecTargetTraveling = Vector3.Normalize(unitEnemyWell:GetPosition() - vecTargetPosition)
 			end
-
-			local vecAbilityTarget = vecTargetPosition
-			if vecTargetTraveling then
-				vecAbilityTarget = vecTargetPosition + vecTargetTraveling
-			end
-
-			bActionTaken = core.OrderAbilityPosition(botBrain, abilFlash, vecAbilityTarget)
 		end
 
-		--Ability3	  ManaRift
-		if not bActionTaken and abilManaRift:CanActivate() and nIsSighted then
+		local vecAbilityTarget = vecTargetPosition
+		if vecTargetTraveling then
+			vecAbilityTarget = vecTargetPosition + vecTargetTraveling * 100
+		end
+
+		bActionTaken = core.OrderAbilityPosition(botBrain, abilFlash, vecAbilityTarget)
+	end
+
+	--Ability3	  ManaRift
+	if not bActionTaken and abilManaRift:CanActivate() and nIsSighted then
 		--Attempting to get ulti working
-			if unitTarget:GetManaPercent() < .25 then
-				bActionTaken = core.OrderAbilityEntity(botBrain, abilManaRift, unitTarget)
-			end
+		if unitTarget:GetManaPercent() < .25 then
+			bActionTaken = core.OrderAbilityEntity(botBrain, abilManaRift, unitTarget)
 		end
+	end
 
-		--Elder Parasite
-		if not bActionTaken and itemElderParasite then  --Activate EP if,
-			if nTargetDistanceSq < (225 * 225) then --Target is close
-				bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemElderParasite)	   --EP ACTIVATED
-			elseif (core.NumberElements(tLocalEnemyHeroes) > 2) then		--Major Conflict is occurring,
-				bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemElderParasite)	   --EP ACTIVATED
-			end
+	--Elder Parasite
+	if not bActionTaken and itemElderParasite then  --Activate EP if,
+		if nTargetDistanceSq < (225 * 225) then --Target is close
+			bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemElderParasite)	   --EP ACTIVATED
+		elseif (core.NumberElements(tLocalEnemyHeroes) > 2) then		--Major Conflict is occurring,
+			bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemElderParasite)	   --EP ACTIVATED
 		end
-
+	end
 
 	if not bActionTaken then
-			return object.harassExecuteOld(botBrain)
+		return object.harassExecuteOld(botBrain)
 	end
 	return bActionTaken
 end
@@ -305,7 +297,7 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 	local unitSelf = core.unitSelf
 	local unitTarget = behaviorLib.heroTarget
 	if unitTarget == nil or not unitTarget:IsValid() then
-		return false --No enemy to kill == NoJoy
+		return false
 	end
 	local vecRetreatPos = behaviorLib.PositionSelfBackUp()
 
@@ -322,20 +314,20 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 
 	-- More enemies or low on life
 	if nCount > 1 or unitSelf:GetHealthPercent() < .25 then
-
 		if bCanSeeUnit then
-
 			local abilFlash = skills.abilFlash
 			local bSelfRooted = unitSelf:IsStunned() or unitSelf:IsImmobilized()
 
 			--Ability1	  Flash
 			if not bSelfRooted and abilFlash:CanActivate() and behaviorLib.lastRetreatUtil > botBrain.nFlashThreshold then
-
 				bActionTaken = core.OrderBlinkAbilityToEscape(botBrain, abilFlash)
+				
+				if bActionTaken then
+					object.bDefensiveBlink = true	-- Don't get aggressive if we're blinking away
+				end
 			end
 		end
 	end -- critical situation
-
 
 	--Activate ElderParasite for speed buff (also increases damage taken, but worth it)
 	local itemElderParasite = core.itemElderParasite

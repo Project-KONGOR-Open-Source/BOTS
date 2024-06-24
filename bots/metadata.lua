@@ -57,7 +57,7 @@ function metadata.SetActiveLayer(sLayerName)
 	if metadata.tMetadataFileNames[sLayerName] == true then
 		BotMetaData.SetActiveLayer(sLayerName)
 	else
-		BotEcho("Metadata layer " .. sLayerName .. " not found.")
+		-- BotEcho("Metadata layer " .. sLayerName .. " not found.")
 	end
 end
 
@@ -83,7 +83,7 @@ function metadata.Initialize(sMapName)
 		metadata.MapMetadataFile = '/bots/metadata/tutorial1.botmetadata'
 		metadata.JukeMetadataFile = "/bots/metadata/jukePoints_caldavar.botmetadata"
 	else
-		BotEcho(" ! ! Warning, no metadata for map "..sMapName.." ! !")
+		-- BotEcho(" ! ! Warning, no metadata for map "..sMapName.." ! !")
 	end
 	
 	if metadata.MapMetadataFile ~= nil then

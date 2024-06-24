@@ -482,7 +482,7 @@ if false then
 	-- [[
 	local sOutput = "My hero --\n"
 	local inventory = core.unitSelf:GetInventory(false)
-	for slot = 1, 6, 1 do
+	for slot = 1, 8, 1 do
 		local curItem = inventory[slot]
 		if curItem ~= nil then
 			local unitPurchaserHero = curItem:GetPurchaserPlayersHero()
@@ -512,7 +512,7 @@ if false then
 	if unitCourier ~= nil then
 		sOutput = "Courier --\n"
 		local inventory = unitCourier:GetInventory(false)
-		for slot = 1, 6, 1 do
+		for slot = 1, 8, 1 do
 			local curItem = inventory[slot]
 			if curItem ~= nil then
 				local unitPurchaserHero = curItem:GetPurchaserPlayersHero()

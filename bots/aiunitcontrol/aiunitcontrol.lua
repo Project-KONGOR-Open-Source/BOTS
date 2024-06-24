@@ -274,8 +274,9 @@ function object:onthink(tGameVariables)
 		end
 		local nUnits = 0
 		
-		--Count Units and bookmark Shiver
+		-- Count Units and bookmark Shiver
 		for _, unit in pairs(tControllableUnits) do
+			-- Ignore Heroes and units we don't own
 			if nMyPlayerID == unit:GetOwnerPlayerID() and unit:IsValid() and not unit:IsHero() then
 				local sType = unit:GetTypeName()
 				
@@ -286,7 +287,7 @@ function object:onthink(tGameVariables)
 					if bDebugEchos then printDebug("Found Shiver!") end
 					unitShiver = unit
 					nUnits = nUnits + 1
-				elseif sType ~= "Pet_GroundFamiliar" and sType ~= "Pet_FlyngCourier" and sType ~= "Heropet_Gemini_Ability4_Fire" and sType ~= "Heropet_Gemini_Ability4_Ice" and sType ~= "Pet_Turretman_Ability2" then
+				elseif sType ~= "Pet_GroundFamiliar" and sType ~= "Pet_FlyngCourier" and sType ~= "Heropet_Gemini_Ability4_Fire" and sType ~= "Heropet_Gemini_Ability4_Ice" and sType ~= "Gadget_Voodoo_Ability4" then
 					if not unit:HasState("State_Parasite_Ability2_Target") and not unit:HasState("State_Moira_Ability3_Self") then
 						tinsert(tUnitsToCommand, unit)
 						nUnits = nUnits + 1
