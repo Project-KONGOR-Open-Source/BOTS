@@ -1,7 +1,7 @@
 Heroes-of-Newerth-Bots
 ======================
 
-This is the code repository for Heroes of Newerth's open-source bot code. This repo is for better communication and codeflow between the community, the Community Bot Team, and Frostburn Studios.
+This is the [code repository for Heroes of Newerth's open-source bot code](https://github.com/honteam/Heroes-of-Newerth-Bots). This repo is for better communication and codeflow between the community, the Community Bot Team, and Frostburn Studios.
 
 How to Submit a Bot on GitHub
 =============================
