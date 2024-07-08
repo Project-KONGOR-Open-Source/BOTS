@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="AdrenalineBot"
+	description="bot_description_adrenaline"
+	heroname="Hero_Adrenaline"
+	rootlua="../heroes/adrenaline_main.lua"
+	defaultplayername="AdrenalineBot"
+	precachepath="/heroes/adrenaline"
+/>

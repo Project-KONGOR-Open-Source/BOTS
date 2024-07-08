@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="ThunderBot"
+	description="bot_description_thunderbringer"
+	heroname="Hero_Kunas"
+	rootlua="../heroes/kunas_main.lua"
+	defaultplayername="ThunderBot"
+	precachepath="/heroes/thunderbringer"
+/>

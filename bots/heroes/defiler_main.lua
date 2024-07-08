@@ -126,12 +126,14 @@ object.onthink 	= object.onthinkOverride
 
 object.nWaveOfDeathUp = 8
 object.nGraveSilenceUp = 4
+object.nThirdUp = 15
 object.nUnholyExpulsionUp = 40
 object.nSheepstickUp = 12
 object.nFrostfieldUp = 12
 
 object.nWaveOfDeathUse = 15
 object.nGraveSilenceUse = 7
+object.nThirdUse = 9
 object.nSheepstickUse = 16
 object.nFrostfieldUse = 10
 
@@ -139,6 +141,7 @@ object.nUnholyExpulsionActive = 70
 
 object.nWaveOfDeathThreshold = 30
 object.nGraveSilenceThreshold = 40
+object.nThirdThreshold = 32
 object.nUnholyExpulsionThreshold = 65
 object.nSheepstickThreshold = 30
 object.nFrostfieldThreshold = 12
@@ -155,6 +158,10 @@ local function AbilitiesUpUtility(hero)
 	
 	if skills.abilGraveSilence:CanActivate() then
 		nUtility = nUtility + object.nGraveSilenceUp
+	end
+	
+	if skills.abilPowerInDeath:CanActivate() then
+		nUtility = nUtility + object.nThirdUp
 	end
 	
 	if skills.abilUnholyExpulsion:CanActivate() then
@@ -206,6 +213,8 @@ function object:oncombateventOverride(EventData)
 			nAddBonus = nAddBonus + self.nWaveOfDeathUse
 		elseif EventData.InflictorName == "Ability_Defiler2" then
 			nAddBonus = nAddBonus + self.nGraveSilenceUse
+		elseif EventData.InflictorName == "Ability_Defiler3" then
+			nAddBonus = nAddBonus + self.nThirdUse
 		elseif EventData.InflictorName == "Ability_Defiler4" then
 			self.nUnholyExpulsionExpireTime = EventData.TimeStamp + GetUnholyExpulsionDuration()
 		end
@@ -230,7 +239,21 @@ object.oncombatevent 	= object.oncombateventOverride
 
 --Utility calc override
 local function CustomHarassUtilityFnOverride(hero)
+
+	local unitSelf = core.unitSelf
 	local nUtility = AbilitiesUpUtility(hero) + UnholyExpulsionActiveUtility()
+	
+	if unitSelf:GetHealthPercent() > .93 then
+		nUtility = nUtility + 4
+	end
+	
+	if unitSelf:GetManaPercent() > .93 then
+		nUtility = nUtility + 8
+	end
+	
+	if unitSelf:HasState("State_Defiler_Ability3_Self") then
+		nUtility = nUtility + 13
+	end
 	
 	return nUtility
 end
@@ -304,6 +327,18 @@ local function HarassHeroExecuteOverride(botBrain)
 		local abilUnholyExpulsion = skills.abilUnholyExpulsion
 		if abilUnholyExpulsion:CanActivate() then
 			bActionTaken = core.OrderAbility(botBrain, abilUnholyExpulsion)
+		end
+	end
+	
+	--Siphon Soul
+	if not bActionTaken and not bTargetRooted and nLastHarassUtility > botBrain.nWaveOfDeathThreshold then
+		if bDebugEchos then BotEcho("  No action yet, checking wave of death") end
+		local abilThird = skills.abilPowerInDeath
+		if abilThird:CanActivate() then
+			local nRange = abilThird:GetRange()
+			if nTargetDistanceSq < (nRange * nRange) then
+				bActionTaken = core.OrderAbilityEntity(botBrain, abilThird, unitTarget)
+			end
 		end
 	end
 	
@@ -417,6 +452,7 @@ behaviorLib.HitBuildingBehavior["Execute"] = HitBuildingExecuteOverride
 	"# Item" is "get # of these"
 	"Item #" is "get this level of the item" --]]
 	
+	
 behaviorLib.StartingItems = 
 	{"Item_GuardianRing", "Item_RunesOfTheBlight", "Item_HealthPotion", "2 Item_ManaPotion", "2 Item_MinorTotem", }
 behaviorLib.LaneItems = 
@@ -425,7 +461,6 @@ behaviorLib.MidItems =
 	{"Item_MysticVestments", "Item_Lightbrand", "Item_MagicArmor2", "Item_GrimoireOfPower"} --MagicArmor2 is Shaman's
 behaviorLib.LateItems = 
 	{"Item_FrostfieldPlate", "Item_Morph", "Item_BehemothsHeart", 'Item_Damage9'} --Morph is Sheepstick. Item_Damage9 is Doombringer
-
 
 
 --[[ colors:

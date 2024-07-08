@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="SwiftBot"
+	description="bot_description_hiro"
+	heroname="Hero_Hiro"
+	rootlua="../heroes/hiro_main.lua"
+	defaultplayername="SwiftBot"
+	precachepath="/heroes/hiro"
+/>

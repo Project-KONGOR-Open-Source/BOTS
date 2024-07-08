@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="BehemothBot"
+	description="bot_description_behemoth"
+	heroname="Hero_Behemoth"
+	rootlua="../heroes/behemoth_main.lua"
+	defaultplayername="BehemothBot"
+	precachepath="/heroes/behemoth"
+/>
