@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="PollywogBot"
+	description="bot_description_pollywogpriest"
+	heroname="Hero_PollywogPriest"
+	rootlua="../heroes/pollywogpriest_main.lua"
+	defaultplayername="PollywogBot"
+	precachepath="/heroes/pollywogpriest"
+/>

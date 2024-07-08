@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="SlitherBot"
+	description="bot_description_slither"
+	heroname="Hero_Ebulus"
+	rootlua="../heroes/ebulus_main.lua"
+	defaultplayername="SlitherBot"
+	precachepath="/heroes/slither"
+/>

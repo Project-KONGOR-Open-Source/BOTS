@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="CorruptedBot"
+	description="bot_description_corrupteddisciple"
+	heroname="Hero_CorruptedDisciple"
+	rootlua="../heroes/corrupteddisciple_main.lua"
+	defaultplayername="CorruptedBot"
+	precachepath="/heroes/corrupteddisciple"
+/>

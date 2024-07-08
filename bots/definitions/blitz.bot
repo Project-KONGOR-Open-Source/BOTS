@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="BlitzBot"
+	description="bot_description_blitz"
+	heroname="Hero_Blitz"
+	rootlua="../heroes/blitz_main.lua"
+	defaultplayername="BlitzBot"
+	precachepath="/heroes/blitz/"
+/>

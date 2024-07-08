@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="ApexBot"
+	description="bot_description_apex"
+	heroname="Hero_Apex"
+	rootlua="../heroes/apex_main.lua"
+	defaultplayername="ApexBot"
+	precachepath="/heroes/apex"
+/>

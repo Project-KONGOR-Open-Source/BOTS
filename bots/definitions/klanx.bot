@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="KlanxBot"
+	description="bot_description_klanx"
+	heroname="Hero_Klanx"
+	rootlua="../heroes/klanx_main.lua"
+	defaultplayername="KlanxBot"
+	precachepath="/heroes/klanx/"
+/>

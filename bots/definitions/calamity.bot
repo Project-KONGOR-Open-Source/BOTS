@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="CalamityBot"
+	description="bot_description_calamity"
+	heroname="Hero_Calamity"
+	rootlua="../heroes/calamity_main.lua"
+	defaultplayername="CalamityBot"
+	precachepath="/heroes/calamity/"
+/>
